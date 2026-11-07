@@ -1,0 +1,54 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+  github:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build version-matched package
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 scripts/package.py --tag "$RELEASE_TAG"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/BestfriendsList-install.zip --verify-tag --title "BestfriendsList $RELEASE_TAG" --notes-file CHANGELOG.md
+  curseforge:
+    needs: github
+    # 2.4.0 was already submitted manually; do not create a duplicate file.
+    if: github.ref_name != 'v2.4.0' && vars.CF_GAME_VERSION_IDS != ''
+    runs-on: ubuntu-latest
+    environment: curseforge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build identical package
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 scripts/package.py --tag "$RELEASE_TAG"
+      - name: Upload to CurseForge
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_PROJECT_ID: ${{ vars.CF_PROJECT_ID || '1788392' }}
+          CF_GAME_VERSION_IDS: ${{ vars.CF_GAME_VERSION_IDS }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 scripts/curseforge.py

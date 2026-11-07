@@ -1,0 +1,13 @@
+/dist/
+*.zip
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+/.agents/
+/.aws/
+/.codex/

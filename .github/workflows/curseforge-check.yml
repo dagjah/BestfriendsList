@@ -1,0 +1,25 @@
+name: CurseForge configuration check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: curseforge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: List supported game versions (no upload)
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: python3 scripts/curseforge.py --list-versions
+      - name: Validate selected versions (no upload)
+        if: vars.CF_GAME_VERSION_IDS != ''
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_PROJECT_ID: ${{ vars.CF_PROJECT_ID || '1788392' }}
+          CF_GAME_VERSION_IDS: ${{ vars.CF_GAME_VERSION_IDS }}
+        run: python3 scripts/curseforge.py --check

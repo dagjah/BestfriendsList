@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: BestfriendsList
+## Notes: Personal faction-aware watchlists and group notes for WoW Forever.
+## Author: dagjah
+## X-License: MIT
+## X-Curse-Project-ID: 1788392
+## Version: 2.4.0
+## SavedVariables: BestfriendsListDB, KillOnSightDB, KillOnSiteDB, KillListDB
+Lists.lua
+Factions.lua
+PartySync.lua
+BestfriendsList.lua
