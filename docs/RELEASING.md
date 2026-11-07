@@ -10,6 +10,15 @@ For the first upload, run this in your normal WSL terminal (not the restricted C
 bash ~/Projects/BestfriendsList/scripts/connect-github.sh
 ```
 
+If HTTPS fails with "Invalid username or token" or "Password authentication is not supported", use SSH after adding your WSL public key to GitHub:
+
+```sh
+ssh -T git@github.com
+bash ~/Projects/BestfriendsList/scripts/connect-github.sh --ssh
+```
+
+GitHub's successful SSH test prints an authenticated greeting and exits with status 1 because shell access is unavailable. The helper switches origin to `git@github.com:dagjah/BestfriendsList.git`, preserves existing commits, and retries the push. Without a transport flag it preserves an existing origin. `--https` switches back explicitly. Never share your private key; only the `.pub` key belongs in GitHub settings.
+
 The equivalent manual steps for an empty repository are:
 
 ```sh

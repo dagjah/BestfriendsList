@@ -3,6 +3,17 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 repository='https://github.com/dagjah/BestfriendsList.git'
+transport=''
+case "${1:-}" in
+    '') ;;
+    --ssh) repository='git@github.com:dagjah/BestfriendsList.git'; transport=ssh ;;
+    --https) transport=https ;;
+    *) echo 'Usage: bash scripts/connect-github.sh [--ssh|--https]' >&2; exit 2 ;;
+esac
+if [[ $# -gt 1 ]]; then
+    echo 'Usage: bash scripts/connect-github.sh [--ssh|--https]' >&2
+    exit 2
+fi
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
     git init -b main
 fi
@@ -16,6 +27,9 @@ if git remote get-url origin >/dev/null 2>&1; then
         https://github.com/dagjah/BestfriendsList|https://github.com/dagjah/BestfriendsList.git|git@github.com:dagjah/BestfriendsList.git) ;;
         *) echo 'Origin points elsewhere. Review git remote -v before proceeding.' >&2; exit 1 ;;
     esac
+    if [[ -n "$transport" ]]; then
+        git remote set-url origin "$repository"
+    fi
 else
     git remote add origin "$repository"
 fi
@@ -25,7 +39,11 @@ if [[ "$branch" != main ]]; then
     exit 1
 fi
 # Read remote history first. Never overwrite an initialized GitHub repository.
-remote_main="$(git ls-remote --heads origin main)"
+if ! remote_main="$(git ls-remote --heads origin main)"; then
+    echo 'Could not access GitHub. For SSH, verify your WSL key is added to GitHub and run ssh -T git@github.com.' >&2
+    echo 'For HTTPS, use a credential manager or personal access token, not your account password.' >&2
+    exit 1
+fi
 if [[ -n "$remote_main" ]]; then
     git fetch origin main
     if ! git rev-parse --verify HEAD >/dev/null 2>&1 || ! git merge-base --is-ancestor origin/main HEAD; then
